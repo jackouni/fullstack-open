@@ -26,6 +26,15 @@ let persons = [
     }
 ]
 
+// HELPERS //
+const generateId = () => {
+  return Math.floor(Math.random() * 999_000_000_000);
+}
+
+const nameExists = (name) => {
+  return persons.some(person => person.name === name)
+}
+
 // ROUTES //
 app.get('/api/persons', (req, res) => {
   res.json(persons)
@@ -56,16 +65,32 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end()
 })
 
-const generateId = () => {
-  return Math.floor(Math.random() * 999_000_000_000);
-}
-
 app.post('/api/persons', (request, response) => {
   const body = request.body
-
+  
   if (!body.content) {
     return response.status(400).json({ 
       error: 'content missing' 
+    })
+  }
+
+  const { name, number } = body.content
+
+  if (!number) {
+    return response.status(400).json({ 
+      error: 'number missing' 
+    })
+  }
+
+  if (!name) {
+    return response.status(400).json({ 
+      error: 'name missing' 
+    })
+  }
+  
+  if (nameExists(name)) {
+    return response.status(400).json({ 
+      error: 'name must be unique'
     })
   }
 
