@@ -1,11 +1,15 @@
-const Persons = ({ persons }) => {
+const Persons = ({ persons, deletionHandler }) => {
+  console.log(persons)
   return (
-    <div>
+    <div onClick={deletionHandler}>
      {persons.map(person => {
         return (
-          <p key={person.id}>
-            {person.name} → {person.number}
-          </p>
+          <div className="personContainer" id={person.id} key={person.id}>
+            <p>
+              {person.name} → {person.number}
+            </p>
+            <button className="deleteBtn">Delete</button>
+          </div>
         )
       })}
     </div>

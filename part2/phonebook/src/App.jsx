@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personsService from './services/persons.js'
 import Persons from './components/Persons'
 import PersonForm from './components/PersonForm'
 import Filter from './components/Filter'
@@ -10,44 +10,71 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   const [newFilter, setNewFilter] = useState('');
 
-  const hook = () => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
-  }
-
-  useEffect(hook, []);
+  useEffect(() => {
+    personsService
+      .getAll()
+      .then(setPersons)
+  }, []);
 
   const searchPersons = () => {
     if (!activeFilter()) return persons
     return persons.filter(person => person.name.includes(newFilter))
   }
-  const activeFilter = () => newFilter.trim().length > 0
-  const nameExists = (name) => persons.some(person => person.name === name)
-  const numberExists = (num) => persons.some(person => person.number === num)
 
-  const inputChangeHandler = (setter) => {
-    return ((event) => setter(event.target.value))
+  const activeFilter = () => newFilter.trim().length > 0
+
+  const inputChangeHandler = setter => ((event) => setter(event.target.value))
+
+  const handleDeletion = (event) => {
+    event.preventDefault();
+    const target = event.target;
+
+    if (target.classList.contains('deleteBtn')) {
+      window.confirm("Are you sure you want to delete?");
+
+      const person = target.closest('.personContainer');
+      personsService
+        .destroy(person.id)
+        .then(() => {
+          console.log("Deletion successful");
+          personsService
+            .getAll()
+            .then(setPersons)
+        })
+        .catch(() => {
+          console.log("Deletion failed");
+        })
+    }
   }
 
   const handlePersonSubmit = (event) => {
     event.preventDefault();
 
-    const name = newName;
-    const number = newNumber;
+    personsService
+      .getAll()
+      .then(allPersons => {
+        const names = allPersons.map(person => person.name)
+        const numbers = allPersons.map(person => person.number)
 
-    if (nameExists(name)) {
-      alert(`${name} is already added to phonebook`)
-    } else if (numberExists(number)) {
-      alert(`${number} is already in phonebook`)
-    } else {
-      setPersons(persons.concat({ name, number, id: persons.length + 1 }));
-    }
+        const nameExists = names.some(name => name === newName)
+        const numberExists = numbers.some(number => number === newNumber)
 
-    setNewName('');
-    setNewNumber('');
+        if (nameExists) {
+          alert(`${newName} is already added to phonebook`)
+        } else if (numberExists) {
+          alert(`${newNumber} is already in phonebook`)
+        } else {
+          const newPerson = { name: newName, number: newNumber }
+    
+          personsService
+            .create(newPerson)
+            .then(addedPerson => {
+              setPersons(persons.concat(addedPerson));
+              setNewName('');
+              setNewNumber('');
+            })
+        }
+      })
   }
 
   return (
@@ -69,7 +96,7 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-      <Persons persons={searchPersons()}/>
+      <Persons persons={searchPersons()} deletionHandler={handleDeletion}/>
     </div>
   )
 }
