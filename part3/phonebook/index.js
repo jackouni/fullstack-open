@@ -29,6 +29,15 @@ app.get('/api/persons', (req, res) => {
   res.json(persons)
 })
 
+app.get('/api/info', (req, res) => {
+  const today = new Date().toISOString().split("T")[0];
+  const body = `
+    <p>Phonebook has info for ${persons.length} people.</p>
+    <p>${today}</p>
+  `
+  res.send(body)
+})
+
 // RUN THIS PROCESS ON A PORT //
 const PORT = 3001
 app.listen(PORT, () => {
