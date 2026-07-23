@@ -19,6 +19,7 @@ let notes = [
   }
 ];
 
+// Defining Routes:
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
@@ -27,7 +28,8 @@ app.get('/api/notes', (request, response) => {
   response.json(notes)
 })
 
+// Listen on port 3001:
 const PORT = 3001
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}!`)
 })
