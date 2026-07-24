@@ -1,7 +1,14 @@
 const express = require("express")
+var morgan = require('morgan')
 const app = express()
 
 app.use(express.json())
+
+morgan.token('body', (req) => {
+  return req.method === 'POST' ? JSON.stringify(req.body) : ''
+})
+
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 let persons = [
     { 
@@ -33,6 +40,10 @@ const generateId = () => {
 
 const nameExists = (name) => {
   return persons.some(person => person.name === name)
+}
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
 }
 
 // ROUTES //
@@ -104,6 +115,9 @@ app.post('/api/persons', (request, response) => {
 
   response.json(person)
 })
+
+// MIDDLEWARE TO CATCH UNKNOWN ENDPOINTS //
+app.use(unknownEndpoint)
 
 // RUN THIS PROCESS ON A PORT //
 const PORT = 3001
