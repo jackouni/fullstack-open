@@ -10,7 +10,6 @@ const [, , pw, name, number] = process.argv
 const url = `mongodb+srv://jacksebbenswe_db_user:${pw}@phonebook.es3jtde.mongodb.net/phonebookApp?retryWrites=true&w=majority&appName=phonebook`
 
 mongoose.set('strictQuery',false)
-
 mongoose.connect(url, { family: 4 })
 
 const noteSchema = new mongoose.Schema({
