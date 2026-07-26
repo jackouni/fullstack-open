@@ -1,16 +1,16 @@
+require('dotenv').config()
 const mongoose = require('mongoose')
+const URI = process.env.MONGODB_URI
 
 if (process.argv.length < 3) {
   console.log('give password as argument')
   process.exit(1)
 }
 
-const [, , pw, name, number] = process.argv
-
-const url = `mongodb+srv://jacksebbenswe_db_user:${pw}@phonebook.es3jtde.mongodb.net/phonebookApp?retryWrites=true&w=majority&appName=phonebook`
+const [, , , name, number] = process.argv
 
 mongoose.set('strictQuery',false)
-mongoose.connect(url, { family: 4 })
+mongoose.connect(URI, { family: 4 })
 
 const noteSchema = new mongoose.Schema({
   name: String,

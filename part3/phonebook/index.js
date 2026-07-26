@@ -1,5 +1,8 @@
+require('dotenv').config()
 const express = require("express")
 var morgan = require('morgan')
+const Person = require('./models/person')
+
 const app = express()
 
 app.use(express.json())
@@ -10,36 +13,15 @@ morgan.token('body', (req) => {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 // HELPERS //
 const generateId = () => {
   return Math.floor(Math.random() * 999_000_000_000);
 }
 
 const nameExists = (name) => {
-  return persons.some(person => person.name === name)
+  return Person.find({}).then(persons => {
+    return persons.some(person => person.name === name)
+  })
 }
 
 const unknownEndpoint = (request, response) => {
@@ -47,8 +29,10 @@ const unknownEndpoint = (request, response) => {
 }
 
 // ROUTES //
-app.get('/api/persons', (req, res) => {
-  res.json(persons)
+app.get('/api/persons', (_, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
 app.get('/api/info', (req, res) => {
@@ -61,13 +45,14 @@ app.get('/api/info', (req, res) => {
 })
 
 app.get('/api/persons/:id', (req, res) => {
-  const id = req.params.id
-  const person = persons.find(person => person.id === id)
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
-  }
+  Person.findById(req.params.id)
+    .then(person => {
+      res.json(person)
+    })
+    .catch(error => {
+      console.log(error.message)
+      res.status(404).end()
+    })
 })
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -76,7 +61,7 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end()
 })
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', async (request, response) => {
   const body = request.body
   
   if (!body.content) {
@@ -99,28 +84,25 @@ app.post('/api/persons', (request, response) => {
     })
   }
   
-  if (nameExists(name)) {
-    return response.status(400).json({ 
-      error: 'name must be unique'
-    })
+  try {
+    const existing = await Person.findOne({ name })
+
+    if (existing) {
+      return response.status(400).json({ error: 'name must be unique' })
+    }
+
+    const savedPerson = await new Person({ name, number }).save()
+    response.json(savedPerson)
+  } catch (error) {
+    next(error)
   }
-
-  const person = {
-    id: generateId(),
-    number: body.content.number,
-    name: body.content.name,
-  }
-
-  persons = persons.concat(person)
-
-  response.json(person)
 })
 
 // MIDDLEWARE TO CATCH UNKNOWN ENDPOINTS //
 app.use(unknownEndpoint)
 
 // RUN THIS PROCESS ON A PORT //
-const PORT = 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}!`)
+  console.log(`Server running on port ${PORT}`)
 })
